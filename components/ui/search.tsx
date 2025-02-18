@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
+  StyleSheet,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
@@ -18,8 +19,8 @@ import Animated, {
 } from "react-native-reanimated";
 import { useData } from "@/context/data";
 import { Skeleton } from "moti/skeleton";
-import type { itemType } from '@/utils/types';
-import { useRouter  } from "expo-router";
+import type { itemType } from "@/utils/types";
+import { useRouter } from "expo-router";
 
 const CloseButton = ({
   searchOpen,
@@ -31,15 +32,7 @@ const CloseButton = ({
   return (
     <>
       {searchOpen && (
-        <TouchableOpacity
-          onPress={closeSearch}
-          style={{
-            position: "absolute",
-            zIndex: 4,
-            top: 10,
-            right: 10,
-          }}
-        >
+        <TouchableOpacity onPress={closeSearch} style={styles.chatCloseButton}>
           <Ionicons name="close" size={50} color="rgb(51, 150, 255)" />
         </TouchableOpacity>
       )}
@@ -57,16 +50,7 @@ const OpenSeachButton = ({
   return (
     <>
       {!searchOpen && (
-        <Pressable
-          onPress={openSearch}
-          style={{
-            flex: 1,
-            flexDirection: "row",
-            justifyContent: "center",
-            gap: 0,
-            alignItems: "center",
-          }}
-        >
+        <Pressable onPress={openSearch} style={styles.chatOpenButton}>
           <EvilIcons
             name="search"
             size={50}
@@ -106,30 +90,12 @@ const SearchView = ({
   return (
     <>
       {searchOpen && (
-        <View
-          style={{
-            flex: 1,
-            padding: 12,
-            paddingTop: 0,
-            overflow: "hidden",
-            borderRadius: 50,
-            justifyContent: "flex-end",
-          }}
-        >
+        <View style={styles.resultsViewContainer}>
           {resultsLoading ? (
             <>
               {Array.from({ length: 4 }).map((_, index) => {
                 return (
-                  <View
-                    key={index}
-                    style={{
-                      width: "100%",
-                      marginTop: 8,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      padding: 4,
-                    }}
-                  >
+                  <View key={index} style={styles.resultsSkeletonContainer}>
                     <View style={{ flex: 1 }}>
                       <Skeleton
                         colorMode={"light"}
@@ -161,48 +127,30 @@ const SearchView = ({
                     }, 200);
                   }
                 }}
-                contentContainerStyle={{
-                  width: "100%",
-                  zIndex: 10,
-                  paddingBottom: 20
-                }}
+                contentContainerStyle={styles.resultsScrollContainer}
               >
                 {searchResults.map((result) => {
                   return (
                     <Pressable
-                    onPress={() =>{
+                      onPress={() => {
                         handleAddToSearchQuery(result);
-                         closeSearch();
-                        }}
-                      key={result.id}
-                      style={{
-                        width: "100%",
-                        marginTop: 8,
-                        flexDirection: "row",
-                        alignItems: "center",
-                        padding: 4,
+                        closeSearch();
                       }}
+                      key={result.id}
+                      style={styles.resultItem}
                     >
                       <View style={{ flex: 1 }}>
                         {result.avatar ? (
                           <Image
                             src={result.avatar}
                             source={{ uri: result.avatar }}
-                            style={{
-                              width: 50,
-                              height: 50,
-                              borderRadius: 12,
-                            }}
+                            style={styles.resultImage}
                           />
                         ) : (
                           <View
                             style={{
+                              ...styles.resultImagePlaceHolder,
                               backgroundColor: result.color,
-                              borderRadius: 12,
-                              justifyContent: "center",
-                              alignItems: "center",
-                              width: 50,
-                              height: 50,
                             }}
                           >
                             <Text style={{ fontSize: 30 }}>
@@ -211,21 +159,9 @@ const SearchView = ({
                           </View>
                         )}
                       </View>
-                      <View
-                        style={{
-                          flex: 7,
-                          flexDirection: "row",
-                          alignItems: "center",
-                        }}
-                      >
+                      <View style={styles.resultTextContainer}>
                         <Text style={{ fontSize: 18 }}>{result.name}</Text>
-                        <Text
-                          style={{
-                            fontSize: 15,
-                            marginLeft: 10,
-                            color: "rgb(158, 158, 158)",
-                          }}
-                        >
+                        <Text style={styles.resultText}>
                           {result.type || ""}
                         </Text>
                       </View>
@@ -236,16 +172,7 @@ const SearchView = ({
             </View>
           )}
 
-          <View
-            style={{
-              width: "100%",
-              flexDirection: "row",
-              justifyContent: "center",
-              borderTopColor: "rgba(158, 158, 158, 0.41)",
-              borderTopWidth: 1,
-              borderStyle: "solid",
-            }}
-          >
+          <View style={styles.searchInputContainer}>
             <View style={{ flex: 1, height: 60, alignItems: "center" }}>
               <EvilIcons
                 name="search"
@@ -260,12 +187,7 @@ const SearchView = ({
                 onChange={handleSearch}
                 placeholder="Add on Interrest"
                 value={searchValue}
-                style={{
-                  width: "100%",
-                  flex: 1,
-                  fontSize: 18,
-                  padding: 12,
-                }}
+                style={styles.searchTextInput}
               />
             </View>
           </View>
@@ -280,7 +202,7 @@ export default function SearchBar({ searchData }: { searchData: itemType[] }) {
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
   const [searchValue, setSearchValue] = useState<string>("");
   const [searchResults, setSearchResults] = useState<itemType[]>(searchData);
-  const router = useRouter ();
+  const router = useRouter();
 
   const openSearch = () => {
     searchValues.value = true;
@@ -290,7 +212,7 @@ export default function SearchBar({ searchData }: { searchData: itemType[] }) {
     console.log("pressed");
     searchValues.value = false;
     setSearchOpen(false);
-    router.push('/');
+    router.push("/");
     setSearchValue("");
   };
 
@@ -330,18 +252,7 @@ export default function SearchBar({ searchData }: { searchData: itemType[] }) {
     return [...filtered, ...unfiltered];
   };
   return (
-    <Animated.View
-      style={[
-        animatedStyle,
-        {
-          position: "absolute",
-          left: "50%",
-          transform: [{ translateX: "-50%" }],
-          borderRadius: 50,
-          zIndex: 3,
-        },
-      ]}
-    >
+    <Animated.View style={[animatedStyle, styles.chatContainer]}>
       <CloseButton searchOpen={searchOpen} closeSearch={closeSearch} />
       <OpenSeachButton searchOpen={searchOpen} openSearch={openSearch} />
       <SearchView
@@ -354,3 +265,90 @@ export default function SearchBar({ searchData }: { searchData: itemType[] }) {
     </Animated.View>
   );
 }
+
+const styles = StyleSheet.create({
+  chatContainer: {
+    position: "absolute",
+    left: "50%",
+    transform: [{ translateX: "-50%" }],
+    borderRadius: 50,
+    zIndex: 3,
+  },
+  chatCloseButton: {
+    position: "absolute",
+    zIndex: 4,
+    top: 10,
+    right: 10,
+  },
+
+  chatOpenButton: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 0,
+    alignItems: "center",
+  },
+  resultsViewContainer: {
+    flex: 1,
+    padding: 12,
+    paddingTop: 0,
+    overflow: "hidden",
+    borderRadius: 50,
+    justifyContent: "flex-end",
+  },
+  resultsSkeletonContainer: {
+    width: "100%",
+    marginTop: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 4,
+  },
+  resultsScrollContainer: {
+    width: "100%",
+    zIndex: 10,
+    paddingBottom: 20,
+  },
+  resultItem: {
+    width: "100%",
+    marginTop: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 4,
+  },
+  resultImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
+  },
+  resultImagePlaceHolder: {
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    width: 50,
+    height: 50,
+  },
+  resultTextContainer: {
+    flex: 7,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  resultText: {
+    fontSize: 15,
+    marginLeft: 10,
+    color: "rgb(158, 158, 158)",
+  },
+  searchInputContainer: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "center",
+    borderTopColor: "rgba(158, 158, 158, 0.41)",
+    borderTopWidth: 1,
+    borderStyle: "solid",
+  },
+  searchTextInput: {
+    width: "100%",
+    flex: 1,
+    fontSize: 18,
+    padding: 12,
+  },
+});
