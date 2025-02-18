@@ -25,6 +25,11 @@ In the output, you'll find options to open the app in a
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
+## APK build
+[Download the APK](https://expo.dev/artifacts/eas/w5F9pRMavKMX8WUKrawRcT.apk)
+
 ## Screenshots
 
 ![Screenshot](https://mycdnbucket-ahmed.s3.us-east-1.amazonaws.com/screenrecording.gif)
+
+
