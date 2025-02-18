@@ -1,4 +1,4 @@
-import { StyleSheet, Image, Text, View, ScrollView } from "react-native";
+import { StyleSheet, Text, View, ScrollView } from "react-native";
 const documentation = `in the _layout.tsx you can find the component searchBar, this component when open it get the search result from the api (i simulated the data in this example). on change of the input it call the function  handle seach this functino reorder the search results on every change of the input it will call the function setSearchResults and update the state of the search results.`;
 
 export default function TabTwoScreen() {

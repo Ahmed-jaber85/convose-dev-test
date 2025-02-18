@@ -1,8 +1,6 @@
 import { useData } from "@/context/data";
 import {
-  Image,
   StyleSheet,
-  Platform,
   View,
   Text,
   TouchableOpacity,
@@ -12,8 +10,15 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import ChatCard from "@/components/ui/chatCard";
 import { Skeleton } from "moti/skeleton";
 
+
+
+
+
+
 export default function HomeScreen() {
   const { searchQuery, removeItemFromSearchQuery, chatsLoading } = useData();
+  
+ 
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.header}>
