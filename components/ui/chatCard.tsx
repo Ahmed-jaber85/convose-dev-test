@@ -1,6 +1,7 @@
-import { StyleSheet, View, Text, Image } from "react-native";
+import { StyleSheet, View, Text, Image, Pressable } from "react-native";
 import interrests from "@/utils/data.json";
 import { ScrollView } from "moti";
+import { useRouter  } from "expo-router";
 
 const suggestions = [
     "say hello",
@@ -9,8 +10,11 @@ const suggestions = [
     "show me how to impelent apis"
 ]
 export default function ChatCard({ chat }: { chat: any }) {
+    const router = useRouter ();
   return (
-    <View style={styles.container}>
+    <Pressable
+    onPress={() => router.push('/explore')}
+     style={styles.container}>
       <View style={styles.header}>
         <View style={styles.avatar}>
           <Image
@@ -66,7 +70,7 @@ export default function ChatCard({ chat }: { chat: any }) {
                 )
             })}
       </ScrollView>
-    </View>
+    </Pressable>
   );
 }
 const styles = StyleSheet.create({

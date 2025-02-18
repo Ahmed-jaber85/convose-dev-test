@@ -19,6 +19,7 @@ import Animated, {
 import { useData } from "@/context/data";
 import { Skeleton } from "moti/skeleton";
 import type { itemType } from '@/utils/types';
+import { useRouter  } from "expo-router";
 
 const CloseButton = ({
   searchOpen,
@@ -93,7 +94,7 @@ const SearchView = ({
   closeSearch: () => void;
   searchValue: string;
 }) => {
-  const { setSearchQuery } = useData();
+  const { handleAddToSearchQuery } = useData();
   const [resultsLoading, setResultsLoading] = useState(true);
 
   useEffect(() => {
@@ -170,7 +171,7 @@ const SearchView = ({
                   return (
                     <Pressable
                     onPress={() =>{
-                         setSearchQuery((prevQuery) => [...prevQuery, result] );
+                        handleAddToSearchQuery(result);
                          closeSearch();
                         }}
                       key={result.id}
@@ -279,6 +280,7 @@ export default function SearchBar({ searchData }: { searchData: itemType[] }) {
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
   const [searchValue, setSearchValue] = useState<string>("");
   const [searchResults, setSearchResults] = useState<itemType[]>(searchData);
+  const router = useRouter ();
 
   const openSearch = () => {
     searchValues.value = true;
@@ -288,6 +290,8 @@ export default function SearchBar({ searchData }: { searchData: itemType[] }) {
     console.log("pressed");
     searchValues.value = false;
     setSearchOpen(false);
+    router.push('/');
+    setSearchValue("");
   };
 
   const animatedStyle = useAnimatedStyle(() => {
