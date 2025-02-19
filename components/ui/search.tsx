@@ -209,7 +209,6 @@ export default function SearchBar({ searchData }: { searchData: itemType[] }) {
     setSearchOpen(true);
   };
   const closeSearch = () => {
-    console.log("pressed");
     searchValues.value = false;
     setSearchOpen(false);
     router.push("/");
