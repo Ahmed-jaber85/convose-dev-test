@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { SetStateAction, useEffect, useState } from "react";
 import {
   Pressable,
   Text,
@@ -22,6 +22,16 @@ import { Skeleton } from "moti/skeleton";
 import type { itemType } from "@/utils/types";
 import { useRouter } from "expo-router";
 
+const parsName = (str: string): any => {
+  const [name, tagsStr] = str.split(" [");
+  const tags = tagsStr ? tagsStr.slice(0, -1).split(" ") : [];
+  const parsed = {
+    name,
+    tags,
+  };
+  console.log(parsed);
+  return parsed;
+};
 const CloseButton = ({
   searchOpen,
   closeSearch,
@@ -68,30 +78,23 @@ const OpenSeachButton = ({
 const SearchView = ({
   searchOpen,
   closeSearch,
-  searchResults,
+  autoCompeleteLocal,
   handleSearch,
   searchValue,
 }: {
   searchOpen: boolean;
-  searchResults: itemType[];
+  autoCompeleteLocal: itemType[];
   handleSearch: (e: NativeSyntheticEvent<{ text: string }>) => void;
   closeSearch: () => void;
   searchValue: string;
 }) => {
   const { handleAddToSearchQuery } = useData();
-  const [resultsLoading, setResultsLoading] = useState(true);
 
-  useEffect(() => {
-    setResultsLoading(true);
-    setTimeout(() => {
-      setResultsLoading(false);
-    }, 1500);
-  }, [searchOpen]);
   return (
     <>
       {searchOpen && (
         <View style={styles.resultsViewContainer}>
-          {resultsLoading ? (
+          {!(autoCompeleteLocal.length > 0) ? (
             <>
               {Array.from({ length: 4 }).map((_, index) => {
                 return (
@@ -118,7 +121,7 @@ const SearchView = ({
               })}
             </>
           ) : (
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1}}>
               <ScrollView
                 ref={(ref) => {
                   if (ref) {
@@ -129,14 +132,14 @@ const SearchView = ({
                 }}
                 contentContainerStyle={styles.resultsScrollContainer}
               >
-                {searchResults.map((result) => {
+                {autoCompeleteLocal.map((result, index) => {
                   return (
                     <Pressable
                       onPress={() => {
                         handleAddToSearchQuery(result);
                         closeSearch();
                       }}
-                      key={result.id}
+                      key={index}
                       style={styles.resultItem}
                     >
                       <View style={{ flex: 1 }}>
@@ -160,10 +163,17 @@ const SearchView = ({
                         )}
                       </View>
                       <View style={styles.resultTextContainer}>
-                        <Text style={{ fontSize: 18 }}>{result.name}</Text>
-                        <Text style={styles.resultText}>
-                          {result.type || ""}
+                        <Text style={{ fontSize: 18 }}>
+                          {parsName(result.name)?.name}
                         </Text>
+
+                    
+                            {parsName(result.name)?.tags.map((tag: string, index: number) => {
+                              return (
+                                <Text key={index} style={styles.resultText}>{tag},</Text>
+                              );
+                            })}
+                        
                       </View>
                     </Pressable>
                   );
@@ -197,13 +207,23 @@ const SearchView = ({
   );
 };
 
-export default function SearchBar({ searchData }: { searchData: itemType[] }) {
+export default function SearchBar({
+  autoCompeleteData,
+  updateAutoCompeleteSuggestions,
+  setautoCompeleteData,
+}: {
+  autoCompeleteData: itemType[];
+  updateAutoCompeleteSuggestions: (word: string) => Promise<any>;
+  setautoCompeleteData: React.Dispatch<React.SetStateAction<itemType[]>>;
+}) {
   const searchValues = useSharedValue<boolean>(false);
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
   const [searchValue, setSearchValue] = useState<string>("");
-  const [searchResults, setSearchResults] = useState<itemType[]>(searchData);
-  const router = useRouter();
+  const [autoCompeleteLocal, setautoCompeleteLocal] = useState<itemType[]>(
+    autoCompeleteData || []
+  );
 
+  const router = useRouter();
   const openSearch = () => {
     searchValues.value = true;
     setSearchOpen(true);
@@ -211,6 +231,7 @@ export default function SearchBar({ searchData }: { searchData: itemType[] }) {
   const closeSearch = () => {
     searchValues.value = false;
     setSearchOpen(false);
+    setautoCompeleteData([]);
     router.push("/");
     setSearchValue("");
   };
@@ -239,24 +260,56 @@ export default function SearchBar({ searchData }: { searchData: itemType[] }) {
     };
   });
 
-  const handleSearch = (e: NativeSyntheticEvent<{ text: string }>) => {
-    setSearchValue(e.nativeEvent.text);
-    setSearchResults(searchFilter(searchData, e.nativeEvent.text).reverse());
+  const handleSearch = async (
+    e: NativeSyntheticEvent<{ text: string }> | null
+  ) => {
+    if (!e) return;
+    const { text } = e.nativeEvent;
+    setSearchValue(text);
+    setautoCompeleteLocal((prevData) =>
+      autoCompeleteFilter([ ...prevData], text).reverse()
+    );
+    updateAutoCompeleteSuggestions(text).then((data: itemType[]) => {
+      const newData = data.filter((newItem) => {
+        return (
+          !autoCompeleteLocal.some(
+            (oldItem) => oldItem.id === newItem.id
+          ) 
+        );
+      });
+      setautoCompeleteLocal((prevData) => {
+        let filteredPrevData = prevData.filter((newItem) => {
+          return (
+            !autoCompeleteLocal.some(
+              (oldItem) => oldItem.id === newItem.id
+            ) 
+          );
+        });
+        return  autoCompeleteFilter([...newData, ...filteredPrevData], text).reverse()
+      }
+      );
+    });
   };
 
-  const searchFilter = (arr: itemType[], filterTerm: string): itemType[] => {
+  const autoCompeleteFilter = (
+    arr: itemType[],
+    filterTerm: string
+  ): itemType[] => {
     const reg = new RegExp(`^${filterTerm}`, "i");
     const filtered = arr.filter((el) => reg.test(el.name));
     const unfiltered = arr.filter((el) => !reg.test(el.name));
     return [...filtered, ...unfiltered];
   };
+  useEffect(() => {
+    updateAutoCompeleteSuggestions("a");
+  }, [searchOpen]);
   return (
     <Animated.View style={[animatedStyle, styles.chatContainer]}>
       <CloseButton searchOpen={searchOpen} closeSearch={closeSearch} />
       <OpenSeachButton searchOpen={searchOpen} openSearch={openSearch} />
       <SearchView
         searchOpen={searchOpen}
-        searchResults={searchResults}
+        autoCompeleteLocal={autoCompeleteLocal}
         handleSearch={handleSearch}
         searchValue={searchValue}
         closeSearch={closeSearch}
@@ -304,7 +357,10 @@ const styles = StyleSheet.create({
   },
   resultsScrollContainer: {
     width: "100%",
+    minHeight: '100%',
     zIndex: 10,
+  
+    justifyContent: 'flex-end',
     paddingBottom: 20,
   },
   resultItem: {
