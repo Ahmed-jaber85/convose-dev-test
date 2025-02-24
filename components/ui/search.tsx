@@ -29,7 +29,6 @@ const parsName = (str: string): any => {
     name,
     tags,
   };
-  console.log(parsed);
   return parsed;
 };
 const CloseButton = ({
@@ -121,7 +120,7 @@ const SearchView = ({
               })}
             </>
           ) : (
-            <View style={{ flex: 1}}>
+            <View style={{ flex: 1 }}>
               <ScrollView
                 ref={(ref) => {
                   if (ref) {
@@ -167,13 +166,29 @@ const SearchView = ({
                           {parsName(result.name)?.name}
                         </Text>
 
-                    
-                            {parsName(result.name)?.tags.map((tag: string, index: number) => {
-                              return (
-                                <Text key={index} style={styles.resultText}>{tag},</Text>
-                              );
-                            })}
-                        
+                        {parsName(result.name)?.tags.map(
+                          (tag: string, index: number) => {
+                            return (
+                              <Text key={index} style={styles.resultText}>
+                                {tag},
+                              </Text>
+                            );
+                          }
+                        )}
+
+                        {result.existing ? (
+                          <Text
+                            style={{
+                              marginLeft: 15,
+                              fontSize: 18,
+                              fontStyle: "italic",
+                            }}
+                          >
+                            (Already added)
+                          </Text>
+                        ) : (
+                          <></>
+                        )}
                       </View>
                     </Pressable>
                   );
@@ -219,7 +234,7 @@ export default function SearchBar({
   const searchValues = useSharedValue<boolean>(false);
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
   const [searchValue, setSearchValue] = useState<string>("");
-  const [autoCompeleteLocal, setautoCompeleteLocal] = useState<itemType[]>(
+  const [autoCompeleteLocal, setAutoCompeleteLocal] = useState<itemType[]>(
     autoCompeleteData || []
   );
 
@@ -266,28 +281,26 @@ export default function SearchBar({
     if (!e) return;
     const { text } = e.nativeEvent;
     setSearchValue(text);
-    setautoCompeleteLocal((prevData) =>
-      autoCompeleteFilter([ ...prevData], text).reverse()
-    );
+    if(text === "") emptySearch();
+    setAutoCompeleteLocal((prevData) => {
+      if (prevData.length > 0)
+        return autoCompeleteFilter([...prevData], text).reverse();
+      else
+        return [];
+    }
+  );
     updateAutoCompeleteSuggestions(text).then((data: itemType[]) => {
       const newData = data.filter((newItem) => {
-        return (
-          !autoCompeleteLocal.some(
-            (oldItem) => oldItem.id === newItem.id
-          ) 
-        );
+        return !autoCompeleteLocal.some((oldItem) => oldItem.id === newItem.id);
       });
-      setautoCompeleteLocal((prevData) => {
+      setAutoCompeleteLocal((prevData) => {
         let filteredPrevData = prevData.filter((newItem) => {
-          return (
-            !autoCompeleteLocal.some(
-              (oldItem) => oldItem.id === newItem.id
-            ) 
+          return !autoCompeleteLocal.some(
+            (oldItem) => oldItem.id === newItem.id
           );
-        });
-        return  autoCompeleteFilter([...newData, ...filteredPrevData], text).reverse()
-      }
-      );
+        });   
+        return [...filteredPrevData ,...autoCompeleteFilter([...newData], text ).reverse()];
+      });
     });
   };
 
@@ -300,8 +313,27 @@ export default function SearchBar({
     const unfiltered = arr.filter((el) => !reg.test(el.name));
     return [...filtered, ...unfiltered];
   };
+  const emptySearch = () => {
+    updateAutoCompeleteSuggestions("").then((data: itemType[]) => {
+      const newData = data.filter((newItem) => {
+        return !autoCompeleteLocal.some(
+          (oldItem) => oldItem.id === newItem.id
+        );
+      });
+      setAutoCompeleteLocal(newData);
+    });
+  }
   useEffect(() => {
-    updateAutoCompeleteSuggestions("a");
+    if (searchOpen) {
+      updateAutoCompeleteSuggestions("").then((data: itemType[]) => {
+        const newData = data.filter((newItem) => {
+          return !autoCompeleteLocal.some(
+            (oldItem) => oldItem.id === newItem.id
+          );
+        });
+        setAutoCompeleteLocal(newData);
+      });
+    }
   }, [searchOpen]);
   return (
     <Animated.View style={[animatedStyle, styles.chatContainer]}>
@@ -357,10 +389,10 @@ const styles = StyleSheet.create({
   },
   resultsScrollContainer: {
     width: "100%",
-    minHeight: '100%',
+    minHeight: "100%",
     zIndex: 10,
-  
-    justifyContent: 'flex-end',
+
+    justifyContent: "flex-end",
     paddingBottom: 20,
   },
   resultItem: {
